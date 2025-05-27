@@ -1,28 +1,23 @@
-import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
 
+// Dummy middleware (authentication disabled)
 export const protectRoute = async (req, res, next) => {
   try {
-    const token = req.cookies.jwt;
+    // You can either skip this middleware or allow all users through for now
+    // Example: Trust a userId passed from the frontend (not secure, just for dev/testing)
 
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized - No Token Provided" });
+    const userId = req.body.userId || req.query.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized - No User ID Provided" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded) {
-      return res.status(401).json({ message: "Unauthorized - Invalid Token" });
-    }
-
-    const user = await User.findById(decoded.userId).select("-password");
-
+    const user = await User.findById(userId).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     req.user = user;
-
     next();
   } catch (error) {
     console.log("Error in protectRoute middleware: ", error.message);
